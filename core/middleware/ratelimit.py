@@ -11,19 +11,14 @@ class RateLimitMiddleware:
         ip = self.get_ip(request)
         key = f"rl:{ip}"
         now = int(time.time())
-
         pipe = cache.client.get_client().pipeline()
-        pipe.zremrangebyscore(key, '-inf', now - 60)   # keep last 60 seconds
+        pipe.zremrangebyscore(key, '-inf', now - 60)
         pipe.zcard(key)
         pipe.zadd(key, {now: now})
         pipe.expire(key, 60)
         _, count, _, _ = pipe.execute()
-
-        if count > 120:   # 120 req/min per IP
-            return JsonResponse(
-                {"detail": "Rate limit exceeded"},
-                status=status.HTTP_429_TOO_MANY_REQUESTS,
-            )
+        if count > 120:
+            return JsonResponse({"detail": "Rate limit exceeded"}, status=status.HTTP_429_TOO_MANY_REQUESTS)
         return self.get_response(request)
 
     @staticmethod
