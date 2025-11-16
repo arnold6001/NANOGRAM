@@ -16,3 +16,8 @@ def send_fcm(token, title, body, data=None):
 def send_apns(device_token, alert):
     # similar wrapper...
     pass
+@receiver(post_save, sender=Message)
+def notify_dm(sender, instance, **kwargs):
+    recipient = instance.chat.other_user(instance.sender)
+    token = recipient.device.fcm_token
+    send_fcm(token, "New message", instance.text[:50])
